@@ -1,3 +1,7 @@
 # Planning Documents
-
 notes
+
+.env
+
+# RUST
+/backend/target/*
