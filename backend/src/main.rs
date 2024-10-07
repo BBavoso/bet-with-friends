@@ -2,19 +2,26 @@ mod models;
 mod repositories;
 
 use std::env;
-use std::error::Error;
+
+type AllResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> AllResult<()> {
     dotenvy::dotenv()?;
     let url = env::var("DATABASE_URL")?;
     let pool = sqlx::postgres::PgPool::connect(&url).await?;
 
     sqlx::migrate!().run(&pool).await?;
 
-    let users = repositories::users::read(&pool).await?;
+    let user = repositories::users::create_user(
+        &pool,
+        "carlos".into(),
+        "carlos@mail.com".into(),
+        "pass4321".into(),
+    )
+    .await?;
 
-    println!("{:?}", users);
+    println!("{:?}", user);
 
     Ok(())
 }
