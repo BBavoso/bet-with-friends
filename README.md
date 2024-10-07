@@ -20,3 +20,8 @@ Users can track scores, set custom stakes, and compete in various bet categories
 -   Backend: Rust
 -   Database: PostgreSQL or another SQL-based system
 -   Authentication: To be determined (e.g., OAuth for social logins, JWT)
+
+# Notes on running
+
+-   You must put a postgres URL in `backend/.env`
+-   To run the tests, the postgres user needs superuser permissions

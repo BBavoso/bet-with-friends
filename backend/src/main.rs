@@ -13,13 +13,7 @@ async fn main() -> AllResult<()> {
 
     sqlx::migrate!().run(&pool).await?;
 
-    let user = repositories::users::create_user(
-        &pool,
-        "carlos".into(),
-        "carlos@mail.com".into(),
-        "pass4321".into(),
-    )
-    .await?;
+    let user = repositories::users::get_user_with_id(&pool, 1).await?;
 
     println!("{:?}", user);
 

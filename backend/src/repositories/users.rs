@@ -2,19 +2,16 @@
 
 use crate::{models::User, AllResult};
 
-pub async fn get_user_with_id(connection: &sqlx::PgPool, id: i32) -> AllResult<Vec<User>> {
+pub async fn get_user_with_id(connection: &sqlx::PgPool, id: i32) -> AllResult<User> {
     let query = sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", id);
-    let users = query.fetch_all(connection).await?;
-    Ok(users)
+    let user = query.fetch_one(connection).await?;
+    Ok(user)
 }
 
-pub async fn get_user_with_username(
-    connection: &sqlx::PgPool,
-    username: &str,
-) -> AllResult<Vec<User>> {
+pub async fn get_user_with_username(connection: &sqlx::PgPool, username: &str) -> AllResult<User> {
     let query = sqlx::query_as!(User, "SELECT * FROM users WHERE username = $1", username);
-    let users = query.fetch_all(connection).await?;
-    Ok(users)
+    let user = query.fetch_one(connection).await?;
+    Ok(user)
 }
 
 pub async fn create_user(
@@ -34,4 +31,40 @@ pub async fn create_user(
     );
     let user = query.fetch_one(connection).await?;
     Ok(user)
+}
+
+mod tests {
+    #![allow(unused_imports)]
+    use super::*;
+    use sqlx::PgPool;
+
+    #[sqlx::test]
+    async fn test_user_by_id(pool: PgPool) -> AllResult<()> {
+        create_user(
+            &pool,
+            "john".into(),
+            "john@mail.com".into(),
+            "pass_ABCD".into(),
+        )
+        .await?;
+        let user = get_user_with_id(&pool, 1).await?;
+        assert_eq!(user.username, "john");
+        assert_eq!(user.email, "john@mail.com");
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_user_by_username(pool: PgPool) -> AllResult<()> {
+        create_user(
+            &pool,
+            "john".into(),
+            "john@mail.com".into(),
+            "pass_ABCD".into(),
+        )
+        .await?;
+        let user = get_user_with_username(&pool, "john").await?;
+        assert_eq!(user.username, "john");
+        assert_eq!(user.email, "john@mail.com");
+        Ok(())
+    }
 }
