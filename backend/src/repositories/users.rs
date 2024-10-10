@@ -33,10 +33,24 @@ pub async fn create_user(
     Ok(user)
 }
 
+#[cfg(test)]
 mod tests {
-    #![allow(unused_imports)]
     use super::*;
     use sqlx::PgPool;
+
+    #[sqlx::test]
+    async fn test_create_user(pool: PgPool) -> AllResult<()> {
+        let user = create_user(
+            &pool,
+            "john".into(),
+            "john@mail.com".into(),
+            "pass_ABCD".into(),
+        )
+        .await?;
+        assert_eq!(user.username, "john");
+        assert_eq!(user.email, "john@mail.com");
+        Ok(())
+    }
 
     #[sqlx::test]
     async fn test_user_by_id(pool: PgPool) -> AllResult<()> {
