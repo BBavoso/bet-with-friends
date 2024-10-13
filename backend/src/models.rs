@@ -53,6 +53,7 @@ pub struct Bet {
     pub paid_out_at: chrono::NaiveDateTime,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Score {
     pub user_id: i32,
     pub total_wins: i32,

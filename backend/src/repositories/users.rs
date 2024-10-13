@@ -34,6 +34,26 @@ pub async fn create_user(
 }
 
 #[cfg(test)]
+pub async fn create_users<T>(pool: &sqlx::PgPool, usernames: Vec<T>) -> AllResult<Vec<User>>
+where
+    T: Into<String> + Clone,
+{
+    let mut users = Vec::with_capacity(usernames.len());
+    for username in usernames {
+        let user = create_user(
+            &pool,
+            username.clone().into(),
+            username.into() + "@mail.com",
+            "pass123".into(),
+        )
+        .await?;
+        users.push(user);
+    }
+    users.reverse();
+    Ok(users)
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use sqlx::PgPool;

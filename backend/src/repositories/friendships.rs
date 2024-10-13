@@ -3,7 +3,7 @@
 use crate::models::{Friendship, FriendshipStatus, User};
 use crate::AllResult;
 
-async fn get_friendship(
+pub async fn get_friendship(
     connection: &sqlx::PgPool,
     sender: &User,
     recipient: &User,
@@ -21,7 +21,7 @@ async fn get_friendship(
     Ok(friendships)
 }
 
-async fn get_friendships(connection: &sqlx::PgPool, user: &User) -> AllResult<Vec<Friendship>> {
+pub async fn get_friendships(connection: &sqlx::PgPool, user: &User) -> AllResult<Vec<Friendship>> {
     let query = sqlx::query_as!(
         Friendship,
         r#"
@@ -34,7 +34,7 @@ async fn get_friendships(connection: &sqlx::PgPool, user: &User) -> AllResult<Ve
     Ok(friendships)
 }
 
-async fn send_friend_request(
+pub async fn send_friend_request(
     connection: &sqlx::PgPool,
     sender: &User,
     recipient: &User,
@@ -54,7 +54,7 @@ async fn send_friend_request(
     Ok(friendship)
 }
 
-async fn create_friendship(
+pub async fn create_friendship(
     connection: &sqlx::PgPool,
     user_1: &User,
     user_2: &User,
@@ -77,6 +77,7 @@ async fn create_friendship(
     Ok(friendship)
 }
 
+#[derive(Clone, Copy)]
 pub enum FriendRequestResponse {
     Accept,
     Reject,
@@ -91,18 +92,18 @@ impl From<FriendRequestResponse> for FriendshipStatus {
     }
 }
 
-async fn respond_to_friend_request(
+pub async fn respond_to_friend_request(
     connection: &sqlx::PgPool,
     user: &User,
     responding_to: &User,
     response: FriendRequestResponse,
-) -> AllResult<Friendship> {
+) -> AllResult<(Friendship, Option<Friendship>)> {
     let friendship = get_friendship(connection, responding_to, user).await?;
     assert_eq!(friendship.status, FriendshipStatus::Pending);
 
     let new_status: FriendshipStatus = response.into();
     let now = sqlx::types::chrono::Local::now().naive_local();
-    let query = sqlx::query_as!(
+    let response_friendship = sqlx::query_as!(
         Friendship,
         r#"
         UPDATE friendships
@@ -114,38 +115,25 @@ async fn respond_to_friend_request(
         now,
         responding_to.id,
         user.id,
-    );
+    )
+    .fetch_one(connection)
+    .await?;
 
-    create_friendship(connection, user, responding_to, new_status).await?;
+    let new_friendship = match response {
+        FriendRequestResponse::Accept => Some(
+            create_friendship(connection, user, responding_to, FriendshipStatus::Accepted).await?,
+        ),
+        FriendRequestResponse::Reject => None,
+    };
 
-    let friendship = query.fetch_one(connection).await?;
-    Ok(friendship)
+    Ok((response_friendship, new_friendship))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repositories::users;
+    use crate::repositories::users::create_users;
     use sqlx::PgPool;
-
-    async fn create_users<T>(pool: &PgPool, usernames: Vec<T>) -> AllResult<Vec<User>>
-    where
-        T: Into<String> + Clone,
-    {
-        let mut users = Vec::with_capacity(usernames.len());
-        for username in usernames {
-            let user = users::create_user(
-                &pool,
-                username.clone().into(),
-                username.into() + "@mail.com",
-                "pass123".into(),
-            )
-            .await?;
-            users.push(user);
-        }
-        users.reverse();
-        Ok(users)
-    }
 
     #[sqlx::test]
     async fn test_send_friend_request(pool: PgPool) -> AllResult<()> {
@@ -203,9 +191,27 @@ mod tests {
         let bob = users.pop().unwrap();
         let john = users.pop().unwrap();
 
-        send_friend_request(&pool, &john, &bob).await?;
+        let friend_request = send_friend_request(&pool, &john, &bob).await?;
 
-        respond_to_friend_request(&pool, &bob, &john, FriendRequestResponse::Accept).await?;
+        assert_eq!(friend_request.user_id, john.id);
+        assert_eq!(friend_request.friend_id, bob.id);
+        assert_eq!(friend_request.status, FriendshipStatus::Pending);
+
+        let response =
+            respond_to_friend_request(&pool, &bob, &john, FriendRequestResponse::Accept).await?;
+
+        let response_friendship_1 = response.0;
+        assert_eq!(response_friendship_1.user_id, john.id);
+        assert_eq!(response_friendship_1.friend_id, bob.id);
+        assert_eq!(response_friendship_1.status, FriendshipStatus::Accepted);
+
+        let response_friendship_2 = response.1;
+        assert!(response_friendship_2.is_some());
+        let response_friendship_2 = response_friendship_2.unwrap();
+
+        assert_eq!(response_friendship_2.user_id, bob.id);
+        assert_eq!(response_friendship_2.friend_id, john.id);
+        assert_eq!(response_friendship_2.status, FriendshipStatus::Accepted);
 
         let friendship_1 = get_friendship(&pool, &john, &bob).await?;
         assert_eq!(friendship_1.user_id, john.id);
@@ -226,19 +232,30 @@ mod tests {
         let bob = users.pop().unwrap();
         let john = users.pop().unwrap();
 
-        send_friend_request(&pool, &john, &bob).await?;
+        let request = send_friend_request(&pool, &john, &bob).await?;
 
-        respond_to_friend_request(&pool, &bob, &john, FriendRequestResponse::Reject).await?;
+        assert_eq!(request.user_id, john.id);
+        assert_eq!(request.friend_id, bob.id);
+        assert_eq!(request.status, FriendshipStatus::Pending);
+
+        let response =
+            respond_to_friend_request(&pool, &bob, &john, FriendRequestResponse::Reject).await?;
+        let response_1 = response.0;
+        let response_2 = response.1;
+
+        assert_eq!(response_1.user_id, john.id);
+        assert_eq!(response_1.friend_id, bob.id);
+        assert_eq!(response_1.status, FriendshipStatus::Rejected);
+
+        assert!(response_2.is_none());
 
         let friendship_1 = get_friendship(&pool, &john, &bob).await?;
         assert_eq!(friendship_1.user_id, john.id);
         assert_eq!(friendship_1.friend_id, bob.id);
         assert_eq!(friendship_1.status, FriendshipStatus::Rejected);
 
-        let friendship_2 = get_friendship(&pool, &bob, &john).await?;
-        assert_eq!(friendship_2.user_id, bob.id);
-        assert_eq!(friendship_2.friend_id, john.id);
-        assert_eq!(friendship_2.status, FriendshipStatus::Rejected);
+        let friendship_2 = get_friendship(&pool, &bob, &john).await;
+        assert!(friendship_2.is_err());
 
         Ok(())
     }
