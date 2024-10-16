@@ -28,29 +28,26 @@ pub struct Friendship {
     pub created_at: chrono::NaiveDateTime,
 }
 
-#[derive(sqlx::Type, PartialEq, Debug)]
-#[sqlx(rename_all = "lowercase")]
+#[derive(sqlx::Type, PartialEq, Debug, Clone, Copy)]
+#[sqlx(type_name = "bet_status", rename_all = "lowercase")]
 pub enum BetStatus {
-    #[sqlx(rename = "not_started")]
-    NotStarted,
     Active,
     Finished,
     #[sqlx(rename = "payed_out")]
     PayedOut,
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Bet {
     pub id: i32,
     pub creator_id: i32,
     pub description: String,
-    pub bet_amount: i32,
     pub status: BetStatus,
-    pub start_time: chrono::NaiveDateTime,
-    pub end_time: chrono::NaiveDateTime,
+    pub stop_bets_at: Option<chrono::NaiveDateTime>,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
     pub paid_out: bool,
-    pub paid_out_at: chrono::NaiveDateTime,
+    pub paid_out_at: Option<chrono::NaiveDateTime>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -65,4 +62,5 @@ pub struct BetParticipant {
     pub bet_id: i32,
     pub user_id: i32,
     pub is_winner: bool,
+    pub bet_amount: i32,
 }
