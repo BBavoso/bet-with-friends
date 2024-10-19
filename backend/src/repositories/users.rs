@@ -2,15 +2,17 @@
 
 use crate::{models::User, AllResult};
 
-pub async fn get_user_with_id(connection: &sqlx::PgPool, id: i32) -> AllResult<User> {
-    let query = sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", id);
-    let user = query.fetch_one(connection).await?;
+pub async fn read_user_with_id(connection: &sqlx::PgPool, id: i32) -> AllResult<User> {
+    let user = sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", id)
+        .fetch_one(connection)
+        .await?;
     Ok(user)
 }
 
-pub async fn get_user_with_username(connection: &sqlx::PgPool, username: &str) -> AllResult<User> {
-    let query = sqlx::query_as!(User, "SELECT * FROM users WHERE username = $1", username);
-    let user = query.fetch_one(connection).await?;
+pub async fn read_user_with_username(connection: &sqlx::PgPool, username: &str) -> AllResult<User> {
+    let user = sqlx::query_as!(User, "SELECT * FROM users WHERE username = $1", username)
+        .fetch_one(connection)
+        .await?;
     Ok(user)
 }
 
@@ -65,7 +67,7 @@ where
 }
 
 #[cfg(test)]
-mod tests {
+mod unit_tests {
     use super::*;
     use sqlx::PgPool;
 
@@ -92,7 +94,7 @@ mod tests {
             "pass_ABCD".into(),
         )
         .await?;
-        let user = get_user_with_id(&pool, 1).await?;
+        let user = read_user_with_id(&pool, 1).await?;
         assert_eq!(user.username, "john");
         assert_eq!(user.email, "john@mail.com");
         Ok(())
@@ -100,16 +102,15 @@ mod tests {
 
     #[sqlx::test]
     async fn test_user_by_username(pool: PgPool) -> AllResult<()> {
-        create_user(
+        let created_user = create_user(
             &pool,
             "john".into(),
             "john@mail.com".into(),
             "pass_ABCD".into(),
         )
         .await?;
-        let user = get_user_with_username(&pool, "john").await?;
-        assert_eq!(user.username, "john");
-        assert_eq!(user.email, "john@mail.com");
+        let read_user = read_user_with_username(&pool, "john").await?;
+        assert_eq!(read_user, created_user);
         Ok(())
     }
 }

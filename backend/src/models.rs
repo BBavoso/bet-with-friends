@@ -2,7 +2,7 @@
 
 use sqlx::{prelude::FromRow, types::chrono};
 
-#[derive(FromRow, Debug)]
+#[derive(FromRow, Debug, PartialEq)]
 pub struct User {
     pub id: i32,
     pub username: String,
