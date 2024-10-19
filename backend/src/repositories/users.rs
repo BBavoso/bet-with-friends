@@ -3,16 +3,28 @@
 use crate::{models::User, AllResult};
 
 pub async fn read_user_with_id(connection: &sqlx::PgPool, id: i32) -> AllResult<User> {
-    let user = sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1", id)
-        .fetch_one(connection)
-        .await?;
+    let user = sqlx::query_as!(
+        User,
+        r#"
+        SELECT * FROM users WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(connection)
+    .await?;
     Ok(user)
 }
 
 pub async fn read_user_with_username(connection: &sqlx::PgPool, username: &str) -> AllResult<User> {
-    let user = sqlx::query_as!(User, "SELECT * FROM users WHERE username = $1", username)
-        .fetch_one(connection)
-        .await?;
+    let user = sqlx::query_as!(
+        User,
+        r#"
+        SELECT * FROM users WHERE username = $1
+        "#,
+        username
+    )
+    .fetch_one(connection)
+    .await?;
     Ok(user)
 }
 
@@ -24,9 +36,11 @@ pub async fn create_user(
 ) -> AllResult<User> {
     let user = sqlx::query_as!(
         User,
-        "INSERT INTO users (username, email, password_hash)
+        r#"
+        INSERT INTO users (username, email, password_hash)
         VALUES ($1, $2, $3)
-        RETURNING *;",
+        RETURNING *;
+        "#,
         username,
         email,
         password_hash
