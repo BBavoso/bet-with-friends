@@ -2,6 +2,8 @@
 
 use crate::{models::User, AllResult};
 
+use super::scores::create_default_score;
+
 pub async fn read_user_with_id(connection: &sqlx::PgPool, id: i32) -> AllResult<User> {
     let user = sqlx::query_as!(
         User,
@@ -47,16 +49,7 @@ pub async fn create_user(
     )
     .fetch_one(connection)
     .await?;
-    sqlx::query!(
-        r#"
-        INSERT INTO scores
-        (user_id, total_wins, total_losses, points_earned)
-        VALUES ($1, 0, 0, 0)
-        "#,
-        user.id
-    )
-    .execute(connection)
-    .await?;
+    create_default_score(connection, &user).await?;
     Ok(user)
 }
 

@@ -77,7 +77,7 @@ pub async fn payout_participant(
     .fetch_one(connection)
     .await?;
     println!("adding to score {:?}", participant);
-    scores::add_to_score(connection, &participant).await?;
+    scores::update_score_winning_bet(connection, &participant).await?;
     println!("added score {:?}", participant);
     return Ok(participant);
 }
