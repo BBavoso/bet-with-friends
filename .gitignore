@@ -2,6 +2,7 @@
 notes
 
 .env
+.DS_STORE
 
 # RUST
 /backend/target/*

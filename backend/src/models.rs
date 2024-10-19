@@ -58,9 +58,11 @@ pub struct Score {
     pub points_earned: i32,
 }
 
+#[derive(Debug)]
 pub struct BetParticipant {
     pub bet_id: i32,
     pub user_id: i32,
-    pub is_winner: bool,
+    pub for_bet: bool,
     pub bet_amount: i32,
+    pub paid_out: bool,
 }

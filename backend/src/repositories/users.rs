@@ -20,7 +20,7 @@ pub async fn create_user(
     email: String,
     password_hash: String,
 ) -> AllResult<User> {
-    let query = sqlx::query_as!(
+    let user = sqlx::query_as!(
         User,
         "INSERT INTO users (username, email, password_hash)
         VALUES ($1, $2, $3)
@@ -28,8 +28,19 @@ pub async fn create_user(
         username,
         email,
         password_hash
-    );
-    let user = query.fetch_one(connection).await?;
+    )
+    .fetch_one(connection)
+    .await?;
+    sqlx::query!(
+        r#"
+        INSERT INTO scores
+        (user_id, total_wins, total_losses, points_earned)
+        VALUES ($1, 0, 0, 0)
+        "#,
+        user.id
+    )
+    .execute(connection)
+    .await?;
     Ok(user)
 }
 

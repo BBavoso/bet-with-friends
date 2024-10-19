@@ -3,7 +3,7 @@
 use sqlx::PgPool;
 
 use crate::{
-    models::{Score, User},
+    models::{BetParticipant, Score, User},
     AllResult,
 };
 
@@ -16,6 +16,23 @@ pub async fn create_default_score(connection: &PgPool, user: &User) -> AllResult
         RETURNING user_id, total_wins, total_losses, points_earned
         "#,
         user.id,
+    )
+    .fetch_one(connection)
+    .await?;
+    Ok(score)
+}
+
+pub async fn add_to_score(connection: &PgPool, participant: &BetParticipant) -> AllResult<Score> {
+    let score = sqlx::query_as!(
+        Score,
+        r#"
+        UPDATE scores
+        SET total_wins = total_wins + $1
+        WHERE user_id = $2
+        RETURNING *
+        "#,
+        participant.bet_amount,
+        participant.user_id
     )
     .fetch_one(connection)
     .await?;
