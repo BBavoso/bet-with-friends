@@ -84,12 +84,12 @@ pub async fn payout_participant(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::repositories::{
+    use super::super::{
         bet_participants,
         bets::{create_timed_bet, create_timeless_bet},
         users::create_users,
     };
+    use super::*;
     use sqlx::PgPool;
 
     #[sqlx::test]

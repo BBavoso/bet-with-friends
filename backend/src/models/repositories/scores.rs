@@ -80,7 +80,7 @@ mod unit_tests {
     use super::*;
     use sqlx::PgPool;
 
-    use crate::repositories::{
+    use super::super::{
         bet_participants::create_bet_participant, bets::create_timeless_bet, users::create_users,
     };
 

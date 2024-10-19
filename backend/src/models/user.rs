@@ -1,3 +1,4 @@
+use super::repositories::users;
 use sqlx::{prelude::FromRow, types::chrono::NaiveDateTime};
 
 #[derive(FromRow, Debug, PartialEq)]

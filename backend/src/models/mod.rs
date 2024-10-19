@@ -3,6 +3,7 @@
 mod bet;
 mod bet_participant;
 mod friendship;
+pub mod repositories;
 mod score;
 mod user;
 

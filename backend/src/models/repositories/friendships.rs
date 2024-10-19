@@ -135,8 +135,8 @@ pub async fn respond_to_friend_request(
 
 #[cfg(test)]
 mod tests {
+    use super::super::users::create_users;
     use super::*;
-    use crate::repositories::users::create_users;
     use sqlx::PgPool;
 
     #[sqlx::test]

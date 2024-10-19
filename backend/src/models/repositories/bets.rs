@@ -2,8 +2,8 @@
 
 use sqlx::types::chrono::NaiveDateTime;
 
+use super::bet_participants::{get_bet_participants, payout_participant};
 use crate::models::{Bet, BetParticipant, BetStatus, User};
-use crate::repositories::bet_participants::{get_bet_participants, payout_participant};
 use crate::AllResult;
 
 pub async fn get_bet_by_id(connection: &sqlx::PgPool, id: i32) -> AllResult<Bet> {
@@ -182,8 +182,8 @@ pub async fn get_bets_with_user(
 
 #[cfg(test)]
 mod tests {
+    use super::super::{bet_participants, users::create_users};
     use super::*;
-    use crate::repositories::{bet_participants, users::create_users};
     use sqlx::PgPool;
 
     #[sqlx::test]
