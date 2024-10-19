@@ -8,7 +8,7 @@ pub async fn get_friendship(
     sender: &User,
     recipient: &User,
 ) -> AllResult<Friendship> {
-    let query = sqlx::query_as!(
+    let friendship = sqlx::query_as!(
         Friendship,
         r#"
         SELECT user_id, friend_id, status AS "status: FriendshipStatus", created_at
@@ -16,21 +16,23 @@ pub async fn get_friendship(
         "#,
         sender.id,
         recipient.id
-    );
-    let friendships = query.fetch_one(connection).await?;
-    Ok(friendships)
+    )
+    .fetch_one(connection)
+    .await?;
+    Ok(friendship)
 }
 
 pub async fn get_friendships(connection: &sqlx::PgPool, user: &User) -> AllResult<Vec<Friendship>> {
-    let query = sqlx::query_as!(
+    let friendships = sqlx::query_as!(
         Friendship,
         r#"
         SELECT user_id, friend_id, status AS "status: FriendshipStatus", created_at
         FROM friendships WHERE user_id = $1
         "#,
         user.id,
-    );
-    let friendships = query.fetch_all(connection).await?;
+    )
+    .fetch_all(connection)
+    .await?;
     Ok(friendships)
 }
 
@@ -39,7 +41,7 @@ pub async fn send_friend_request(
     sender: &User,
     recipient: &User,
 ) -> AllResult<Friendship> {
-    let query = sqlx::query_as!(
+    let friendship = sqlx::query_as!(
         Friendship,
         r#"
         INSERT INTO friendships (user_id, friend_id, status)
@@ -49,8 +51,9 @@ pub async fn send_friend_request(
         sender.id,
         recipient.id,
         FriendshipStatus::Pending as _,
-    );
-    let friendship = query.fetch_one(connection).await?;
+    )
+    .fetch_one(connection)
+    .await?;
     Ok(friendship)
 }
 
@@ -61,7 +64,7 @@ pub async fn create_friendship(
     status: FriendshipStatus,
 ) -> AllResult<Friendship> {
     let now = sqlx::types::chrono::Local::now().naive_local();
-    let query = sqlx::query_as!(
+    let friendship = sqlx::query_as!(
         Friendship,
         r#"
         INSERT INTO friendships (user_id, friend_id, status, responded_at)
@@ -72,8 +75,9 @@ pub async fn create_friendship(
         user_2.id,
         status as _,
         now
-    );
-    let friendship = query.fetch_one(connection).await?;
+    )
+    .fetch_one(connection)
+    .await?;
     Ok(friendship)
 }
 
