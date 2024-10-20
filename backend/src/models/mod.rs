@@ -5,7 +5,9 @@ mod bet_participant;
 mod friendship;
 mod repositories;
 mod score;
-pub mod user;
+#[cfg(test)]
+mod tests;
+mod user;
 
 pub use bet::{Bet, BetStatus};
 pub use bet_participant::BetParticipant;

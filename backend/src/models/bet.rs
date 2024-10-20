@@ -28,23 +28,26 @@ pub struct Bet {
 }
 
 impl Bet {
-    async fn read_by_id(connection: &PgPool, id: i32) -> AllResult<Bet> {
+    pub async fn read_by_id(connection: &PgPool, id: i32) -> AllResult<Bet> {
         bets::get_bet_by_id(connection, id).await
     }
 
-    async fn read_all_by_status(connection: &PgPool, status: &BetStatus) -> AllResult<Vec<Bet>> {
+    pub async fn read_all_by_status(
+        connection: &PgPool,
+        status: &BetStatus,
+    ) -> AllResult<Vec<Bet>> {
         bets::get_bets_by_status(connection, status).await
     }
 
-    async fn close(&mut self, connection: &PgPool) -> AllResult<()> {
+    pub async fn close(&mut self, connection: &PgPool) -> AllResult<()> {
         bets::close_bet(connection, self).await
     }
 
-    async fn payout(&mut self, connection: &PgPool, bet_outcome: bool) -> AllResult<()> {
+    pub async fn payout(&mut self, connection: &PgPool, bet_outcome: bool) -> AllResult<()> {
         bets::payout_bet(connection, self, bet_outcome).await
     }
 
-    async fn participants(&self, connection: &PgPool) -> AllResult<Vec<BetParticipant>> {
+    pub async fn participants(&self, connection: &PgPool) -> AllResult<Vec<BetParticipant>> {
         bet_participants::get_bet_participants(connection, self).await
     }
 }

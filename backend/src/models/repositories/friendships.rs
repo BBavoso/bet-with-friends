@@ -20,7 +20,10 @@ pub async fn get_friendship(
     Ok(friendship)
 }
 
-pub async fn get_friendships(connection: &sqlx::PgPool, user: &User) -> AllResult<Vec<Friendship>> {
+pub async fn get_all_friendships(
+    connection: &sqlx::PgPool,
+    user: &User,
+) -> AllResult<Vec<Friendship>> {
     let friendships = sqlx::query_as!(
         Friendship,
         r#"
@@ -28,6 +31,24 @@ pub async fn get_friendships(connection: &sqlx::PgPool, user: &User) -> AllResul
         FROM friendships WHERE user_id = $1
         "#,
         user.id,
+    )
+    .fetch_all(connection)
+    .await?;
+    Ok(friendships)
+}
+
+pub async fn get_accepted_friendships(
+    connection: &sqlx::PgPool,
+    user: &User,
+) -> AllResult<Vec<Friendship>> {
+    let friendships = sqlx::query_as!(
+        Friendship,
+        r#"
+        SELECT user_id, friend_id, status AS "status: FriendshipStatus", created_at
+        FROM friendships WHERE user_id = $1 AND status = $2
+        "#,
+        user.id,
+        FriendshipStatus::Accepted as _
     )
     .fetch_all(connection)
     .await?;
@@ -178,10 +199,10 @@ mod tests {
         send_friend_request(&pool, &mark, &john).await?;
         send_friend_request(&pool, &mark, &bob).await?;
 
-        let john_friendships = get_friendships(&pool, &john).await?;
+        let john_friendships = get_all_friendships(&pool, &john).await?;
         assert_eq!(john_friendships.len(), 1);
 
-        let mark_friendships = get_friendships(&pool, &mark).await?;
+        let mark_friendships = get_all_friendships(&pool, &mark).await?;
         assert_eq!(mark_friendships.len(), 2);
 
         Ok(())

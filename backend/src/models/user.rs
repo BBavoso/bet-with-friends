@@ -20,7 +20,7 @@ pub struct User {
 }
 
 impl User {
-    async fn new(
+    pub async fn new(
         connection: &PgPool,
         username: String,
         email: String,
@@ -29,27 +29,31 @@ impl User {
         users::create_user(connection, username, email, password_hash).await
     }
 
-    async fn read_from_id(connection: &PgPool, id: i32) -> AllResult<Self> {
+    pub async fn read_from_id(connection: &PgPool, id: i32) -> AllResult<Self> {
         users::read_user_with_id(connection, id).await
     }
 
-    async fn read_from_name(connection: &PgPool, username: &str) -> AllResult<Self> {
+    pub async fn read_from_name(connection: &PgPool, username: &str) -> AllResult<Self> {
         users::read_user_with_username(connection, username).await
     }
 
-    async fn create_default_score(&self, connection: &PgPool) -> AllResult<Score> {
+    pub async fn create_default_score(&self, connection: &PgPool) -> AllResult<Score> {
         scores::create_default_score(connection, self).await
     }
 
-    async fn score(&self, connection: &PgPool) -> AllResult<Score> {
+    pub async fn score(&self, connection: &PgPool) -> AllResult<Score> {
         scores::read_user_score(connection, self).await
     }
 
-    async fn friendships(&self, connection: &PgPool) -> AllResult<Vec<Friendship>> {
-        friendships::get_friendships(connection, self).await
+    pub async fn friendships_all(&self, connection: &PgPool) -> AllResult<Vec<Friendship>> {
+        friendships::get_all_friendships(connection, self).await
     }
 
-    async fn send_friend_request(
+    pub async fn friendships_accepted(&self, connection: &PgPool) -> AllResult<Vec<Friendship>> {
+        friendships::get_accepted_friendships(connection, self).await
+    }
+
+    pub async fn send_friend_request(
         &self,
         connection: &PgPool,
         to_user: &User,
@@ -57,7 +61,7 @@ impl User {
         friendships::send_friend_request(connection, self, to_user).await
     }
 
-    async fn accept_friend_request(
+    pub async fn accept_friend_request(
         &self,
         connection: &PgPool,
         responding_to: &User,
@@ -72,7 +76,7 @@ impl User {
         Ok(())
     }
 
-    async fn reject_friend_request(
+    pub async fn reject_friend_request(
         &self,
         connection: &PgPool,
         responding_to: &User,
@@ -87,11 +91,11 @@ impl User {
         Ok(())
     }
 
-    async fn bets_created(&self, connection: &PgPool) -> AllResult<Vec<Bet>> {
+    pub async fn bets_created(&self, connection: &PgPool) -> AllResult<Vec<Bet>> {
         bets::get_bets_by_user(connection, self).await
     }
 
-    async fn create_timeless_bet(
+    pub async fn create_timeless_bet(
         &self,
         connection: &PgPool,
         description: String,
@@ -99,7 +103,7 @@ impl User {
         bets::create_timeless_bet(connection, self, description).await
     }
 
-    async fn create_timed_bet(
+    pub async fn create_timed_bet(
         &self,
         connection: &PgPool,
         description: String,
@@ -108,11 +112,11 @@ impl User {
         bets::create_timed_bet(connection, self, description, stop_bets_at).await
     }
 
-    async fn bets(&self, connection: &PgPool) -> AllResult<Vec<BetParticipant>> {
+    pub async fn bets(&self, connection: &PgPool) -> AllResult<Vec<BetParticipant>> {
         bet_participants::get_bet_participants_by_bet_user(connection, self).await
     }
 
-    async fn particpate_in_bet(
+    pub async fn particpate_in_bet(
         &self,
         connection: &PgPool,
         bet: &Bet,
