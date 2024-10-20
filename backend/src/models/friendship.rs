@@ -1,4 +1,8 @@
-use sqlx::types::chrono::NaiveDateTime;
+use sqlx::{types::chrono::NaiveDateTime, PgPool};
+
+use crate::AllResult;
+
+use super::{repositories::friendships, User};
 
 #[derive(sqlx::Type, PartialEq, Debug)]
 #[sqlx(type_name = "friendship_status", rename_all = "lowercase")]
@@ -14,4 +18,14 @@ pub struct Friendship {
     pub friend_id: i32,
     pub status: FriendshipStatus,
     pub created_at: NaiveDateTime,
+}
+
+impl Friendship {
+    async fn read_from_users(
+        connection: &PgPool,
+        sender: &User,
+        recipient: &User,
+    ) -> AllResult<Friendship> {
+        friendships::get_friendship(connection, sender, recipient).await
+    }
 }

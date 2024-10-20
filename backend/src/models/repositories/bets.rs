@@ -1,5 +1,3 @@
-#![allow(dead_code, unreachable_code, unused_variables)]
-
 use sqlx::types::chrono::NaiveDateTime;
 
 use super::bet_participants::{get_bet_participants, payout_participant};
@@ -100,9 +98,9 @@ pub async fn create_timed_bet(
     Ok(bet)
 }
 
-pub async fn close_bet(connection: &sqlx::PgPool, bet: Bet) -> AllResult<Bet> {
+pub async fn close_bet(connection: &sqlx::PgPool, bet: &mut Bet) -> AllResult<()> {
     assert_eq!(bet.status, BetStatus::Active);
-    let bet = sqlx::query_as!(
+    let new_bet = sqlx::query_as!(
         Bet,
         r#"
         UPDATE bets
@@ -116,17 +114,23 @@ pub async fn close_bet(connection: &sqlx::PgPool, bet: Bet) -> AllResult<Bet> {
     )
     .fetch_one(connection)
     .await?;
-    Ok(bet)
+    bet.status = BetStatus::Finished;
+    bet.updated_at = new_bet.updated_at;
+    Ok(())
 }
 
-pub async fn payout_bet(connection: &sqlx::PgPool, bet: Bet, for_bet: bool) -> AllResult<Bet> {
+pub async fn payout_bet(
+    connection: &sqlx::PgPool,
+    bet: &mut Bet,
+    bet_outcome: bool,
+) -> AllResult<()> {
     assert_eq!(bet.status, BetStatus::Finished);
     let participants_to_payout = get_bet_participants(connection, &bet).await?;
     for participant in participants_to_payout {
-        payout_participant(connection, participant, for_bet).await?;
+        payout_participant(connection, participant, bet_outcome).await?;
     }
 
-    let bet = sqlx::query_as!(
+    let new_bet = sqlx::query_as!(
         Bet,
         r#"
         UPDATE bets
@@ -140,7 +144,9 @@ pub async fn payout_bet(connection: &sqlx::PgPool, bet: Bet, for_bet: bool) -> A
     )
     .fetch_one(connection)
     .await?;
-    Ok(bet)
+    bet.status = BetStatus::PayedOut;
+    bet.updated_at = new_bet.updated_at;
+    Ok(())
 }
 
 pub async fn get_bets_with_user(
@@ -209,12 +215,12 @@ mod tests {
         let mut users = create_users(&pool, vec!["Bob"]).await?;
         let bob = users.pop().unwrap();
 
-        let bet = create_timeless_bet(&pool, &bob, String::from("test_description")).await?;
+        let mut bet = create_timeless_bet(&pool, &bob, String::from("test_description")).await?;
 
         assert_eq!(bet.status, BetStatus::Active);
 
         let bet_copy = bet.clone();
-        let bet = close_bet(&pool, bet).await?;
+        close_bet(&pool, &mut bet).await?;
 
         assert_eq!(bet_copy.id, bet.id);
         assert_eq!(bet_copy.creator_id, bet.creator_id);
@@ -222,7 +228,7 @@ mod tests {
         assert_eq!(bet.status, BetStatus::Finished);
 
         let bet_copy = bet.clone();
-        let bet = payout_bet(&pool, bet, true).await?;
+        payout_bet(&pool, &mut bet, true).await?;
 
         assert_eq!(bet_copy.id, bet.id);
         assert_eq!(bet_copy.creator_id, bet.creator_id);
@@ -238,7 +244,8 @@ mod tests {
         let bob = users.pop().unwrap();
         let john = users.pop().unwrap();
 
-        let timeless_bet = create_timeless_bet(&pool, &bob, String::from("description")).await?;
+        let mut timeless_bet =
+            create_timeless_bet(&pool, &bob, String::from("description")).await?;
         create_timeless_bet(&pool, &bob, String::from("description")).await?;
         create_timeless_bet(&pool, &bob, String::from("description")).await?;
         create_timeless_bet(&pool, &john, String::from("description")).await?;
@@ -246,7 +253,7 @@ mod tests {
         let now = sqlx::types::chrono::Local::now().naive_local();
         let tommorow = now + chrono::TimeDelta::days(1);
 
-        let timed_bet =
+        let mut timed_bet =
             create_timed_bet(&pool, &bob, String::from("description"), tommorow).await?;
         create_timed_bet(&pool, &bob, String::from("description"), tommorow).await?;
         create_timed_bet(&pool, &bob, String::from("description"), tommorow).await?;
@@ -264,6 +271,11 @@ mod tests {
         let john_timed_bet =
             bet_participants::create_bet_participant(&pool, &john, &timed_bet, 10, true).await?;
 
+        assert_eq!(bob_timeless_bet.bet_id, timeless_bet.id);
+        assert_eq!(john_timeless_bet.bet_id, timeless_bet.id);
+        assert_eq!(bob_timed_bet.bet_id, timed_bet.id);
+        assert_eq!(john_timed_bet.bet_id, timed_bet.id);
+
         let user_bets = get_bets_with_user(&pool, &bob).await?;
 
         assert_eq!(user_bets.len(), 2);
@@ -278,14 +290,16 @@ mod tests {
             .iter()
             .any(|(bet, bet_participant)| bet == &timed_bet && bet_participant.bet_id == bet.id));
 
-        let timed_bet = close_bet(&pool, timed_bet).await?;
-        let timeless_bet = close_bet(&pool, timeless_bet).await?;
+        close_bet(&pool, &mut timed_bet).await?;
+        close_bet(&pool, &mut timeless_bet).await?;
 
-        let payed_out_timeless = payout_bet(&pool, timeless_bet.clone(), true).await?;
+        let mut payed_out_timeless = timeless_bet.clone();
+        payout_bet(&pool, &mut payed_out_timeless, true).await?;
         assert_eq!(payed_out_timeless.status, BetStatus::PayedOut);
         assert_eq!(payed_out_timeless.id, timeless_bet.id);
 
-        let payed_out_timed = payout_bet(&pool, timed_bet.clone(), true).await?;
+        let mut payed_out_timed = timed_bet.clone();
+        payout_bet(&pool, &mut payed_out_timed, true).await?;
         assert_eq!(payed_out_timed.status, BetStatus::PayedOut);
         assert_eq!(payed_out_timed.id, timed_bet.id);
 

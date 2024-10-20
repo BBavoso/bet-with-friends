@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use sqlx::PgPool;
 
 use crate::{
@@ -36,7 +34,7 @@ pub async fn read_user_score(connection: &PgPool, user: &User) -> AllResult<Scor
     Ok(score)
 }
 
-pub async fn update_score_winning_bet(
+pub(super) async fn update_score_winning_bet(
     connection: &PgPool,
     participant: &BetParticipant,
 ) -> AllResult<Score> {
@@ -56,7 +54,7 @@ pub async fn update_score_winning_bet(
     Ok(score)
 }
 
-pub async fn update_score_losing_bet(
+pub(super) async fn update_score_losing_bet(
     connection: &PgPool,
     participant: &BetParticipant,
 ) -> AllResult<Score> {

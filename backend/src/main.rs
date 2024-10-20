@@ -12,5 +12,13 @@ async fn main() -> AllResult<()> {
 
     sqlx::migrate!().run(&connection).await?;
 
+    // models::user::create_user(
+    //     &connection,
+    //     "john".into(),
+    //     "john@mail.com".into(),
+    //     "johnpass".into(),
+    // )
+    // .await?;
+
     Ok(())
 }

@@ -1,4 +1,11 @@
-use sqlx::types::chrono::NaiveDateTime;
+use sqlx::{types::chrono::NaiveDateTime, PgPool};
+
+use crate::AllResult;
+
+use super::{
+    repositories::{bet_participants, bets},
+    BetParticipant,
+};
 
 #[derive(sqlx::Type, PartialEq, Debug, Clone, Copy)]
 #[sqlx(type_name = "bet_status", rename_all = "lowercase")]
@@ -20,4 +27,26 @@ pub struct Bet {
     pub updated_at: NaiveDateTime,
     pub paid_out: bool,
     pub paid_out_at: Option<NaiveDateTime>,
+}
+
+impl Bet {
+    async fn read_by_id(connection: &PgPool, id: i32) -> AllResult<Bet> {
+        bets::get_bet_by_id(connection, id).await
+    }
+
+    async fn read_all_by_status(connection: &PgPool, status: &BetStatus) -> AllResult<Vec<Bet>> {
+        bets::get_bets_by_status(connection, status).await
+    }
+
+    async fn close(&mut self, connection: &PgPool) -> AllResult<()> {
+        bets::close_bet(connection, self).await
+    }
+
+    async fn payout(&mut self, connection: &PgPool, bet_outcome: bool) -> AllResult<()> {
+        bets::payout_bet(connection, self, bet_outcome).await
+    }
+
+    async fn participants(&self, connection: &PgPool) -> AllResult<Vec<BetParticipant>> {
+        bet_participants::get_bet_participants(connection, self).await
+    }
 }
