@@ -3,9 +3,9 @@
 mod bet;
 mod bet_participant;
 mod friendship;
-pub mod repositories;
+mod repositories;
 mod score;
-mod user;
+pub mod user;
 
 pub use bet::{Bet, BetStatus};
 pub use bet_participant::BetParticipant;

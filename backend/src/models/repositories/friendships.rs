@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::models::{Friendship, FriendshipStatus, User};
 use crate::AllResult;
 
@@ -57,7 +55,7 @@ pub async fn send_friend_request(
     Ok(friendship)
 }
 
-pub async fn create_friendship(
+async fn create_friendship(
     connection: &sqlx::PgPool,
     user_1: &User,
     user_2: &User,

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::{models::User, AllResult};
 
 use super::scores::create_default_score;
