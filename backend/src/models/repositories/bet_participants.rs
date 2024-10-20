@@ -49,13 +49,17 @@ pub async fn create_bet_participant(
     let bet_participant = sqlx::query_as!(
         BetParticipant,
         r#"
-        INSERT INTO bet_participants (bet_id, user_id, for_bet, bet_amount, paid_out) VALUES ($1, $2, $3, $4, FALSE) RETURNING *;
+        INSERT INTO bet_participants (bet_id, user_id, for_bet, bet_amount, paid_out)
+        VALUES ($1, $2, $3, $4, FALSE)
+        RETURNING *;
         "#,
         bet.id,
         user.id,
         for_bet,
         amount
-    ).fetch_one(connection).await?;
+    )
+    .fetch_one(connection)
+    .await?;
     Ok(bet_participant)
 }
 

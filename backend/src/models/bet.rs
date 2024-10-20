@@ -1,11 +1,9 @@
-use sqlx::{types::chrono::NaiveDateTime, PgPool};
-
-use crate::AllResult;
-
 use super::{
     repositories::{bet_participants, bets},
     BetParticipant,
 };
+use crate::AllResult;
+use sqlx::{types::chrono::NaiveDateTime, PgPool};
 
 #[derive(sqlx::Type, PartialEq, Debug, Clone, Copy)]
 #[sqlx(type_name = "bet_status", rename_all = "lowercase")]

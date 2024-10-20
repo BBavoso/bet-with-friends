@@ -1,8 +1,6 @@
-use sqlx::{types::chrono::NaiveDateTime, PgPool};
-
-use crate::AllResult;
-
 use super::{repositories::friendships, User};
+use crate::AllResult;
+use sqlx::{types::chrono::NaiveDateTime, PgPool};
 
 #[derive(sqlx::Type, PartialEq, Debug)]
 #[sqlx(type_name = "friendship_status", rename_all = "lowercase")]

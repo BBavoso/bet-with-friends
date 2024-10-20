@@ -1,8 +1,6 @@
-use sqlx::PgPool;
-
-use crate::AllResult;
-
 use super::repositories::bet_participants;
+use crate::AllResult;
+use sqlx::PgPool;
 
 #[derive(Debug)]
 pub struct BetParticipant {

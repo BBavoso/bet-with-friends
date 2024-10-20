@@ -1,5 +1,3 @@
-use crate::AllResult;
-
 use super::{
     repositories::{
         bet_participants, bets,
@@ -8,6 +6,7 @@ use super::{
     },
     Bet, BetParticipant, Friendship, Score,
 };
+use crate::AllResult;
 use sqlx::{prelude::FromRow, types::chrono::NaiveDateTime, PgPool};
 
 #[derive(FromRow, Debug, PartialEq)]
