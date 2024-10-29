@@ -10,7 +10,6 @@ pub struct UserCreator {
     password_hash: String,
 }
 
-#[axum::debug_handler]
 pub async fn create_user(
     pool: State<PgPool>,
     body: Json<UserCreator>,
