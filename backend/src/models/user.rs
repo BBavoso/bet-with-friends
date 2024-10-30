@@ -7,10 +7,10 @@ use super::{
     Bet, BetParticipant, Friendship, Score,
 };
 use crate::AllResult;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, types::chrono::NaiveDateTime, PgPool};
 
-#[derive(FromRow, Debug, PartialEq, Serialize)]
+#[derive(FromRow, Debug, PartialEq, Serialize, Deserialize)]
 pub struct User {
     pub id: i32,
     pub username: String,

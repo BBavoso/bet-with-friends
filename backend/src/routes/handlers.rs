@@ -1,7 +1,9 @@
-use crate::models::User;
+use crate::models::{Score, User};
 use axum::{extract::State, Json};
 use serde::Deserialize;
 use sqlx::PgPool;
+
+type APIResult<T> = Result<Json<T>, &'static str>;
 
 #[derive(Deserialize)]
 pub struct CreateUser {
@@ -10,10 +12,7 @@ pub struct CreateUser {
     password_hash: String,
 }
 
-pub async fn create_user(
-    pool: State<PgPool>,
-    body: Json<CreateUser>,
-) -> Result<Json<User>, Box<str>> {
+pub async fn create_user(pool: State<PgPool>, body: Json<CreateUser>) -> APIResult<User> {
     let CreateUser {
         username,
         email,
@@ -23,19 +22,28 @@ pub async fn create_user(
     User::new(&pool, username, email, password_hash)
         .await
         .map(|user| Json(user))
-        .map_err(|_| Box::from("Unable to create user"))
+        .map_err(|_| "Unable to create user")
 }
 
 #[derive(Deserialize)]
-pub struct GetUser {
+pub struct Username {
     username: String,
 }
 
-pub async fn get_user(pool: State<PgPool>, body: Json<GetUser>) -> Result<Json<User>, Box<str>> {
-    let GetUser { username } = body.0;
-
+pub async fn get_user(pool: State<PgPool>, body: Json<Username>) -> APIResult<User> {
+    let Username { username } = body.0;
     User::read_from_name(&pool, &username)
         .await
         .map(|user| Json(user))
-        .map_err(|_| Box::from("Unable to get user"))
+        .map_err(|_| "Unable to get user")
+}
+
+pub async fn get_score(
+    State(pool): State<PgPool>,
+    Json(Username { username }): Json<Username>,
+) -> APIResult<Score> {
+    Score::from_username(&pool, &username)
+        .await
+        .map(|user| Json(user))
+        .map_err(|_| "Unable to get score")
 }

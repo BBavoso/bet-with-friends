@@ -73,6 +73,22 @@ pub(super) async fn update_score_losing_bet(
     Ok(score)
 }
 
+pub async fn read_score_by_username(connection: &PgPool, username: &str) -> AllResult<Score> {
+    let score = sqlx::query_as!(
+        Score,
+        r#"
+        SELECT user_id, total_wins, total_losses, points_earned 
+        FROM users
+        JOIN scores ON scores.user_id = users.id
+        WHERE username = $1
+        "#,
+        username
+    )
+    .fetch_one(connection)
+    .await?;
+    Ok(score)
+}
+
 #[cfg(test)]
 mod unit_tests {
     use super::*;
@@ -152,6 +168,31 @@ mod unit_tests {
         assert_eq!(score.points_earned, 0);
         assert_eq!(score.total_wins, 0);
         assert_eq!(score.total_losses, 1);
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn get_score_with_username(pool: PgPool) -> AllResult<()> {
+        let username = "bob";
+
+        let mut users = create_users(&pool, vec![username]).await?;
+        let bob = users.pop().unwrap();
+
+        let score = read_user_score(&pool, &bob).await?;
+
+        assert_eq!(score.user_id, bob.id);
+        assert_eq!(score.points_earned, 0);
+        assert_eq!(score.total_wins, 0);
+        assert_eq!(score.total_losses, 0);
+
+        let valid_score = read_score_by_username(&pool, username).await?;
+
+        assert_eq!(valid_score, score);
+
+        let invalid_score = read_score_by_username(&pool, "invalid_name").await;
+
+        assert!(invalid_score.is_err());
 
         Ok(())
     }

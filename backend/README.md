@@ -53,3 +53,26 @@ Get a user by username
     "updated_at": "2024-10-30T04:32:56.789418"
 }
 ```
+
+## /user/score
+
+### GET
+
+**Request**
+
+```json
+{
+    "username": "james"
+}
+```
+
+**Response**
+
+```json
+{
+    "user_id": 1,
+    "total_wins": 0,
+    "total_losses": 0,
+    "points_earned": 0
+}
+```
