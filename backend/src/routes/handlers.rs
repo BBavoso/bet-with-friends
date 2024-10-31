@@ -9,17 +9,17 @@ type APIResult<T> = Result<Json<T>, &'static str>;
 pub struct CreateUser {
     username: String,
     email: String,
-    password_hash: String,
+    password: String,
 }
 
 pub async fn create_user(pool: State<PgPool>, body: Json<CreateUser>) -> APIResult<User> {
     let CreateUser {
         username,
         email,
-        password_hash,
+        password,
     } = body.0;
 
-    User::new(&pool, username, email, password_hash)
+    User::new(&pool, username, email, password)
         .await
         .map(|user| Json(user))
         .map_err(|_| "Unable to create user")

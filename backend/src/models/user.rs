@@ -7,14 +7,15 @@ use super::{
     Bet, BetParticipant, Friendship, Score,
 };
 use crate::AllResult;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use sqlx::{prelude::FromRow, types::chrono::NaiveDateTime, PgPool};
 
-#[derive(FromRow, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(FromRow, Debug, PartialEq, Serialize)]
 pub struct User {
     pub id: i32,
     pub username: String,
     pub email: String,
+    #[serde(skip)]
     pub password_hash: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
@@ -25,8 +26,9 @@ impl User {
         connection: &PgPool,
         username: String,
         email: String,
-        password_hash: String,
+        password: String,
     ) -> AllResult<Self> {
+        let password_hash = hash_password(password);
         users::create_user(connection, username, email, password_hash).await
     }
 
@@ -126,4 +128,9 @@ impl User {
     ) -> AllResult<BetParticipant> {
         bet_participants::create_bet_participant(connection, self, bet, amount, for_bet).await
     }
+}
+
+fn hash_password(password: String) -> String {
+    // TODO: HASH function
+    password
 }
