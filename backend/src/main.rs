@@ -1,5 +1,5 @@
 mod models;
-mod routes;
+mod router;
 
 use std::env;
 
@@ -13,7 +13,7 @@ async fn main() -> AllResult<()> {
 
     sqlx::migrate!().run(&connection).await?;
 
-    let app: axum::Router = routes::create_router(connection);
+    let app: axum::Router = router::create_router(connection);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
