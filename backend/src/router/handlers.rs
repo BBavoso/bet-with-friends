@@ -12,13 +12,14 @@ pub struct CreateUser {
     password: String,
 }
 
-pub async fn create_user(pool: State<PgPool>, body: Json<CreateUser>) -> APIResult<User> {
-    let CreateUser {
+pub async fn create_user(
+    pool: State<PgPool>,
+    Json(CreateUser {
         username,
         email,
         password,
-    } = body.0;
-
+    }): Json<CreateUser>,
+) -> APIResult<User> {
     User::new(&pool, username, email, password)
         .await
         .map(|user| Json(user))
@@ -30,8 +31,10 @@ pub struct Username {
     username: String,
 }
 
-pub async fn get_user(pool: State<PgPool>, body: Json<Username>) -> APIResult<User> {
-    let Username { username } = body.0;
+pub async fn get_user(
+    pool: State<PgPool>,
+    Json(Username { username }): Json<Username>,
+) -> APIResult<User> {
     User::read_from_name(&pool, &username)
         .await
         .map(|user| Json(user))
