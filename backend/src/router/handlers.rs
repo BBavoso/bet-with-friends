@@ -1,4 +1,4 @@
-use crate::models::{Score, User};
+use crate::models::{Bet, Score, User};
 use axum::{extract::State, Json};
 use serde::Deserialize;
 use sqlx::PgPool;
@@ -49,4 +49,42 @@ pub async fn get_score(
         .await
         .map(|user| Json(user))
         .map_err(|_| "Unable to get score")
+}
+
+#[derive(Deserialize)]
+pub struct CreateBet {
+    username: String,
+    description: String,
+    stop_bets_at: Option<chrono::NaiveDateTime>,
+}
+
+pub async fn create_bet(
+    State(pool): State<PgPool>,
+    Json(CreateBet {
+        username,
+        description,
+        stop_bets_at,
+    }): Json<CreateBet>,
+) -> APIResult<Bet> {
+    let user = User::read_from_name(&pool, &username)
+        .await
+        .map_err(|_| "Unable to get user")?;
+    let bet = match stop_bets_at {
+        Some(time) => user.create_timed_bet(&pool, description, time).await,
+        None => user.create_timeless_bet(&pool, description).await,
+    };
+    bet.map(|bet| Json(bet)).map_err(|_| "Unable to create bet")
+}
+
+pub async fn get_bets(
+    State(pool): State<PgPool>,
+    Json(Username { username }): Json<Username>,
+) -> APIResult<Vec<Bet>> {
+    let user = User::read_from_name(&pool, &username)
+        .await
+        .map_err(|_| "Unable to get user")?;
+    user.bets_created(&pool)
+        .await
+        .map(|bet| Json(bet))
+        .map_err(|_| "Unable to get bets")
 }

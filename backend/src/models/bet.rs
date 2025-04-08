@@ -3,9 +3,10 @@ use super::{
     BetParticipant,
 };
 use crate::AllResult;
+use serde::Serialize;
 use sqlx::{types::chrono::NaiveDateTime, PgPool};
 
-#[derive(sqlx::Type, PartialEq, Debug, Clone, Copy)]
+#[derive(sqlx::Type, PartialEq, Debug, Clone, Copy, Serialize)]
 #[sqlx(type_name = "bet_status", rename_all = "lowercase")]
 pub enum BetStatus {
     Active,
@@ -14,7 +15,7 @@ pub enum BetStatus {
     PayedOut,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub struct Bet {
     pub id: i32,
     pub creator_id: i32,

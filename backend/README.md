@@ -74,3 +74,105 @@ Get a user by username
     "points_earned": 0
 }
 ```
+
+## /user/bets
+
+### GET
+
+**Request**
+
+```json
+{
+    "username": "bob"
+}
+```
+
+**Response**
+
+```json
+[
+    {
+        "id": 1,
+        "creator_id": 2,
+        "description": "test bet 1",
+        "status": "Active",
+        "stop_bets_at": null,
+        "created_at": "2025-04-08T21:47:39.659087",
+        "updated_at": "2025-04-08T21:47:39.659087",
+        "paid_out": false,
+        "paid_out_at": null
+    },
+    {
+        "id": 2,
+        "creator_id": 2,
+        "description": "test bet 1",
+        "status": "Active",
+        "stop_bets_at": "2025-05-10T21:47:39.659087",
+        "created_at": "2025-04-08T21:55:57.692273",
+        "updated_at": "2025-04-08T21:55:57.692273",
+        "paid_out": false,
+        "paid_out_at": null
+    }
+]
+```
+
+## /bet
+
+May be used with and with out cuttoff datetime
+
+Without cuttoff:
+
+### POST
+
+**Request**
+
+```json
+{
+    "username": "bob",
+    "description": "test bet 1"
+}
+```
+
+**Response**
+
+```json
+{
+    "id": 1,
+    "creator_id": 2,
+    "description": "test bet 1",
+    "status": "Active",
+    "stop_bets_at": null,
+    "created_at": "2025-04-08T21:47:39.659087",
+    "updated_at": "2025-04-08T21:47:39.659087",
+    "paid_out": false,
+    "paid_out_at": null
+}
+```
+
+With cuttoff:
+
+**Request**
+
+```json
+{
+    "username": "bob",
+    "description": "test bet 1",
+    "stop_bets_at": "2025-05-10T21:47:39.659087"
+}
+```
+
+**Response**
+
+```json
+{
+    "id": 2,
+    "creator_id": 2,
+    "description": "test bet 1",
+    "status": "Active",
+    "stop_bets_at": "2025-05-10T21:47:39.659087",
+    "created_at": "2025-04-08T21:55:57.692273",
+    "updated_at": "2025-04-08T21:55:57.692273",
+    "paid_out": false,
+    "paid_out_at": null
+}
+```
