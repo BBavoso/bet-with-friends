@@ -22,7 +22,7 @@ pub async fn create_user(
 ) -> APIResult<User> {
     User::new(&pool, username, email, password)
         .await
-        .map(|user| Json(user))
+        .map(Json)
         .map_err(|_| "Unable to create user")
 }
 
@@ -37,7 +37,7 @@ pub async fn get_user(
 ) -> APIResult<User> {
     User::read_from_name(&pool, &username)
         .await
-        .map(|user| Json(user))
+        .map(Json)
         .map_err(|_| "Unable to get user")
 }
 
@@ -47,7 +47,7 @@ pub async fn get_score(
 ) -> APIResult<Score> {
     Score::from_username(&pool, &username)
         .await
-        .map(|user| Json(user))
+        .map(Json)
         .map_err(|_| "Unable to get score")
 }
 
@@ -73,7 +73,7 @@ pub async fn create_bet(
         Some(time) => user.create_timed_bet(&pool, description, time).await,
         None => user.create_timeless_bet(&pool, description).await,
     };
-    bet.map(|bet| Json(bet)).map_err(|_| "Unable to create bet")
+    bet.map(Json).map_err(|_| "Unable to create bet")
 }
 
 pub async fn get_bets(
@@ -85,6 +85,6 @@ pub async fn get_bets(
         .map_err(|_| "Unable to get user")?;
     user.bets_created(&pool)
         .await
-        .map(|bet| Json(bet))
+        .map(Json)
         .map_err(|_| "Unable to get bets")
 }

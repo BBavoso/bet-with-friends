@@ -125,7 +125,7 @@ pub async fn payout_bet(
     bet_outcome: bool,
 ) -> AllResult<()> {
     assert_eq!(bet.status, BetStatus::Finished);
-    let participants_to_payout = get_bet_participants(connection, &bet).await?;
+    let participants_to_payout = get_bet_participants(connection, bet).await?;
     for participant in participants_to_payout {
         payout_participant(connection, participant, bet_outcome).await?;
     }
